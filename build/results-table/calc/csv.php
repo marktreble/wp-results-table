@@ -15,13 +15,18 @@ function getTableDataFromCSVFile($csv) {
 
     // Extract the number of rounds comleted
     // and the number of discards to apply
+    $max_rounds = intval($meta[3]);
+    $extra_discards = intval($meta[4]);
     $rounds_completed = intval($meta[0]) - 1;
+    
     $num_discards = ($rounds_completed > 14)
         ? 2
         : (($rounds_completed > 3)
             ? 1
             : 0
     );
+    $num_discards += $extra_discards;
+
 
     if ($rounds_completed <= 0) {
         return [];
@@ -48,9 +53,12 @@ function getTableDataFromCSVFile($csv) {
 
         $times = array_slice($row, 2, $rounds_completed);
 
+        $penalties = array_slice($row, $max_rounds + 2, 1)[0];
+
         $data[] = [
             "n" => $pilot_name,
-            "t" => $times     
+            "t" => $times,
+            "p" => $penalties
         ];
 
         for ($round = 0; $round < count($times); $round++) {
@@ -79,8 +87,9 @@ function getTableDataFromCSVFile($csv) {
 
         rsort($scores);
         $score = array_sum(array_slice($scores, 0, $rounds_completed - $num_discards));
+        $penalties = $pilot["p"];
 
-        $pilot["s"] = $score;
+        $pilot["s"] = $score - $penalties;
         $pilot["t"] = null;
 
         $data[$i] = $pilot;
